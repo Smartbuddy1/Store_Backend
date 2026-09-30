@@ -1,0 +1,115 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =============================================
+// 1. Category Master
+// =============================================
+model Category {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @unique @db.VarChar(100)
+  prefix    String   @unique @db.VarChar(10)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  items Item[]
+
+  @@map("categories")
+}
+
+// =============================================
+// 2. Staff / Helper Master
+// =============================================
+model Staff {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(150)
+  type      StaffType
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  stockOuts StockOut[]
+
+  @@map("staff")
+}
+
+enum StaffType {
+  Staff
+  Helper
+  Supplier
+  Other
+}
+
+// =============================================
+// 3. Item Master
+// =============================================
+model Item {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  itemCode     String   @unique @map("item_code") @db.VarChar(20)
+  itemName     String   @map("item_name") @db.VarChar(200)
+  categoryName String   @map("category") @db.VarChar(100)
+  unit         String   @default("Nos") @db.VarChar(50)
+  minimumStock Int      @default(5) @map("minimum_stock")
+  description  String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  category  Category   @relation(fields: [categoryName], references: [name])
+  stockIns  StockIn[]
+  stockOuts StockOut[]
+
+  @@map("items")
+}
+
+// =============================================
+// 4. Stock In
+// =============================================
+model StockIn {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  date       DateTime @db.Date
+  time       String   @db.VarChar(10)
+  itemCode   String   @map("item_code") @db.VarChar(20)
+  itemName   String   @map("item_name") @db.VarChar(200)
+  category   String?  @db.VarChar(100)
+  quantity   Int
+  source     String   @default("Supplier") @db.VarChar(150)
+  remarks    String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  item Item @relation(fields: [itemCode], references: [itemCode])
+
+  @@map("stock_in")
+}
+
+// =============================================
+// 5. Stock Out
+// =============================================
+model StockOut {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  date        DateTime @db.Date
+  time        String   @db.VarChar(10)
+  itemCode    String   @map("item_code") @db.VarChar(20)
+  itemName    String   @map("item_name") @db.VarChar(200)
+  category    String?  @db.VarChar(100)
+  quantity    Int
+  handoverTo  String?  @map("handover_to") @db.VarChar(150)
+  staffId     String?  @map("staff_id") @db.Uuid
+  purpose     String?  @db.Text
+  remarks     String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  item  Item   @relation(fields: [itemCode], references: [itemCode])
+  staff Staff? @relation(fields: [staffId], references: [id])
+
+  @@map("stock_out")
+}
