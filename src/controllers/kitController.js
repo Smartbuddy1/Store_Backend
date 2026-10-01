@@ -87,6 +87,8 @@ exports.updateKit = async (req, res) => {
     const { id } = req.params;
     const { kitName, description, items } = req.body;
 
+    const oldKit = await prisma.kit.findUnique({ where: { id } });
+    
     await prisma.kitItem.deleteMany({
       where: { kitId: id }
     });
@@ -110,6 +112,30 @@ exports.updateKit = async (req, res) => {
         }
       }
     });
+
+    // If kit was renamed, update the history purposes so it reflects in Site Dispatch
+    if (oldKit && oldKit.kitName !== kitName) {
+      const oldPrefix = `Kit Dispatch: ${oldKit.kitName} (Qty:`;
+      const newPrefix = `Kit Dispatch: ${kitName} (Qty:`;
+      
+      // Get all matching stock outs
+      const matchingStockOuts = await prisma.stockOut.findMany({
+        where: {
+          purpose: {
+            startsWith: `Kit Dispatch: ${oldKit.kitName} (Qty:`
+          }
+        }
+      });
+      
+      // Update them one by one
+      for (const so of matchingStockOuts) {
+        const newPurpose = so.purpose.replace(oldPrefix, newPrefix);
+        await prisma.stockOut.update({
+          where: { id: so.id },
+          data: { purpose: newPurpose }
+        });
+      }
+    }
 
     res.json({ success: true, data: kit });
   } catch (error) {

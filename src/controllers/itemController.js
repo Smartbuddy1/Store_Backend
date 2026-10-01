@@ -56,6 +56,18 @@ const updateItem = async (req, res) => {
       where: { id },
       data: { itemName: item_name, categoryName: category, unit, minimumStock: parseInt(minimum_stock), description }
     });
+    
+    // Update itemName and category in historical records so UI stays consistent
+    await prisma.stockIn.updateMany({
+      where: { itemCode: data.itemCode },
+      data: { itemName: item_name, category: category }
+    });
+    
+    await prisma.stockOut.updateMany({
+      where: { itemCode: data.itemCode },
+      data: { itemName: item_name, category: category }
+    });
+
     res.json({ success: true, data });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };

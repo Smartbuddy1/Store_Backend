@@ -91,3 +91,32 @@ exports.returnTool = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
+
+exports.updateLog = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { toolCode, helperName, issueTime, returnTime, status } = req.body;
+    const data = {};
+    if (toolCode !== undefined) data.toolCode = toolCode;
+    if (helperName !== undefined) data.helperName = helperName;
+    if (issueTime !== undefined) data.issueTime = issueTime;
+    if (returnTime !== undefined) data.returnTime = returnTime;
+    if (status !== undefined) data.status = status;
+    const log = await prisma.toolLog.update({ where: { id }, data });
+    res.json({ success: true, data: log });
+  } catch (error) {
+    console.error('Error updating tool log:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+exports.deleteLog = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.toolLog.delete({ where: { id } });
+    res.json({ success: true, message: 'Log deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting tool log:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
