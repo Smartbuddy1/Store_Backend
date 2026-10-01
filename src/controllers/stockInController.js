@@ -35,7 +35,7 @@ const createStockIn = async (req, res) => {
         itemCode: item_code,
         itemName: item_name,
         category: category || null,
-        quantity: parseInt(quantity),
+        quantity: parseFloat(quantity),
         source: source || 'Supplier',
         remarks: remarks || null
       }
@@ -50,7 +50,7 @@ const updateStockIn = async (req, res) => {
   try {
     const data = await prisma.stockIn.update({
       where: { id },
-      data: { date: new Date(date), time, itemCode: item_code, itemName: item_name, category, quantity: parseInt(quantity), source, remarks }
+      data: { date: new Date(date), time, itemCode: item_code, itemName: item_name, category, quantity: parseFloat(quantity), source, remarks }
     });
     res.json({ success: true, data });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }

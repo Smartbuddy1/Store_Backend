@@ -20,6 +20,8 @@ app.use('/api/items', require('./routes/itemRoutes'));
 app.use('/api/stock-in', require('./routes/stockInRoutes'));
 app.use('/api/stock-out', require('./routes/stockOutRoutes'));
 app.use('/api/current-stock', require('./routes/stockRoutes'));
+app.use('/api/tools', require('./routes/toolRoutes'));
+app.use('/api/kits', require('./routes/kitRoutes'));
 
 // Health check
 app.get('/api/health', (req, res) => {

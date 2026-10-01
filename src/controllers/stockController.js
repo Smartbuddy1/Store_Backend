@@ -27,7 +27,7 @@ const getCurrentStock = async (req, res) => {
       const totalOut = item.stockOuts.reduce((sum, s) => sum + s.quantity, 0);
       const currentQty = totalIn - totalOut;
       const itemStatus =
-        currentQty === 0 ? 'Empty' :
+        currentQty <= 0 ? 'Empty' :
         currentQty <= item.minimumStock ? 'Low' : 'Good';
 
       return {
@@ -66,7 +66,7 @@ const getDashboardStats = async (req, res) => {
       const currentQty = totalIn - totalOut;
       if (totalIn > 0) totalQtyIn += 1;
       if (totalOut > 0) totalQtyOut += 1;
-      if (currentQty === 0) outOfStock++;
+      if (currentQty <= 0) outOfStock++;
       else if (currentQty <= item.minimumStock) lowStock++;
       else goodStock++;
     });

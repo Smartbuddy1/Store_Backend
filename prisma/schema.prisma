@@ -57,7 +57,7 @@ model Item {
   itemName     String   @map("item_name") @db.VarChar(200)
   categoryName String   @map("category") @db.VarChar(100)
   unit         String   @default("Nos") @db.VarChar(50)
-  minimumStock Int      @default(5) @map("minimum_stock")
+  minimumStock Float      @default(5) @map("minimum_stock")
   description  String?  @db.Text
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
@@ -65,6 +65,7 @@ model Item {
   category  Category   @relation(fields: [categoryName], references: [name])
   stockIns  StockIn[]
   stockOuts StockOut[]
+  kitItems  KitItem[]
 
   @@map("items")
 }
@@ -79,13 +80,13 @@ model StockIn {
   itemCode   String   @map("item_code") @db.VarChar(20)
   itemName   String   @map("item_name") @db.VarChar(200)
   category   String?  @db.VarChar(100)
-  quantity   Int
+  quantity   Float
   source     String   @default("Supplier") @db.VarChar(150)
   remarks    String?  @db.Text
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
-  item Item @relation(fields: [itemCode], references: [itemCode])
+  item Item @relation(fields: [itemCode], references: [itemCode], onDelete: Cascade)
 
   @@map("stock_in")
 }
@@ -100,7 +101,7 @@ model StockOut {
   itemCode    String   @map("item_code") @db.VarChar(20)
   itemName    String   @map("item_name") @db.VarChar(200)
   category    String?  @db.VarChar(100)
-  quantity    Int
+  quantity    Float
   handoverTo  String?  @map("handover_to") @db.VarChar(150)
   staffId     String?  @map("staff_id") @db.Uuid
   purpose     String?  @db.Text
@@ -108,8 +109,72 @@ model StockOut {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  item  Item   @relation(fields: [itemCode], references: [itemCode])
+  item  Item   @relation(fields: [itemCode], references: [itemCode], onDelete: Cascade)
   staff Staff? @relation(fields: [staffId], references: [id])
 
   @@map("stock_out")
+}
+
+// =============================================
+// 6. Tools
+// =============================================
+model Tool {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  toolCode  String   @unique @map("tool_code") @db.VarChar(50)
+  toolName  String   @map("tool_name") @db.VarChar(200)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  logs      ToolLog[]
+
+  @@map("tools")
+}
+
+// =============================================
+// 7. Tool Logs (Issuance & Returns)
+// =============================================
+model ToolLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  toolCode    String   @map("tool_code") @db.VarChar(50)
+  helperName  String   @map("helper_name") @db.VarChar(150)
+  issueTime   String   @map("issue_time") @db.VarChar(10)
+  returnTime  String?  @map("return_time") @db.VarChar(10)
+  status      String   @default("ISSUED") @db.VarChar(20) // ISSUED or RETURNED
+  date        DateTime @default(now()) @db.Date
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tool        Tool     @relation(fields: [toolCode], references: [toolCode])
+
+  @@map("tool_logs")
+}
+
+// =============================================
+// 8. Kit / Package Master
+// =============================================
+model Kit {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kitName     String   @unique @map("kit_name") @db.VarChar(200)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  kitItems    KitItem[]
+
+  @@map("kits")
+}
+
+model KitItem {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kitId     String   @map("kit_id") @db.Uuid
+  itemCode  String   @map("item_code") @db.VarChar(20)
+  quantity  Float    @default(1)
+  unit      String?  @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  kit       Kit      @relation(fields: [kitId], references: [id], onDelete: Cascade)
+  item      Item     @relation(fields: [itemCode], references: [itemCode], onDelete: Cascade)
+
+  @@map("kit_items")
 }

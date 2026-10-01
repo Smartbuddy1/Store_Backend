@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE "items" ALTER COLUMN "minimum_stock" SET DEFAULT 5,
+ALTER COLUMN "minimum_stock" SET DATA TYPE DOUBLE PRECISION;
+
+-- AlterTable
+ALTER TABLE "stock_in" ALTER COLUMN "quantity" SET DATA TYPE DOUBLE PRECISION;
+
+-- AlterTable
+ALTER TABLE "stock_out" ALTER COLUMN "quantity" SET DATA TYPE DOUBLE PRECISION;

@@ -35,7 +35,7 @@ const createStockOut = async (req, res) => {
         itemCode: item_code,
         itemName: item_name,
         category: category || null,
-        quantity: parseInt(quantity),
+        quantity: parseFloat(quantity),
         handoverTo: handover_to || null,
         staffId: staff_id || null,
         purpose: purpose || null,
@@ -52,7 +52,7 @@ const updateStockOut = async (req, res) => {
   try {
     const data = await prisma.stockOut.update({
       where: { id },
-      data: { date: new Date(date), time, itemCode: item_code, itemName: item_name, category, quantity: parseInt(quantity), handoverTo: handover_to, staffId: staff_id || null, purpose, remarks }
+      data: { date: new Date(date), time, itemCode: item_code, itemName: item_name, category, quantity: parseFloat(quantity), handoverTo: handover_to, staffId: staff_id || null, purpose, remarks }
     });
     res.json({ success: true, data });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
