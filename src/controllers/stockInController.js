@@ -16,9 +16,18 @@ const getStockIn = async (req, res) => {
           ]
         })
       },
+      include: {
+        item: { select: { photoUrl: true } }
+      },
       orderBy: [{ date: 'desc' }, { createdAt: 'desc' }]
     });
-    res.json({ success: true, data });
+    
+    const formattedData = data.map(record => ({
+      ...record,
+      photoUrl: record.item?.photoUrl || null
+    }));
+    
+    res.json({ success: true, data: formattedData });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 

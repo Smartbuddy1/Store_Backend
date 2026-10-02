@@ -59,6 +59,7 @@ model Item {
   unit         String   @default("Nos") @db.VarChar(50)
   minimumStock Float      @default(5) @map("minimum_stock")
   description  String?  @db.Text
+  photoUrl     String?  @map("photo_url") @db.Text
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 

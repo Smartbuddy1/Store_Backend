@@ -40,7 +40,8 @@ const getCurrentStock = async (req, res) => {
         total_in: totalIn,
         total_out: totalOut,
         current_qty: currentQty,
-        status: itemStatus
+        status: itemStatus,
+        photo_url: item.photoUrl || null
       };
     }).filter(item => !status || item.status === status);
 

@@ -41,7 +41,8 @@ const createItem = async (req, res) => {
         categoryName: category,
         unit: unit || 'Nos',
         minimumStock: parseInt(minimum_stock) || 5,
-        description: description || null
+        description: description || null,
+        photoUrl: req.body.photo_url || null
       }
     });
     res.status(201).json({ success: true, data });
@@ -50,11 +51,18 @@ const createItem = async (req, res) => {
 
 const updateItem = async (req, res) => {
   const { id } = req.params;
-  const { item_name, category, unit, minimum_stock, description } = req.body;
+  const { item_name, category, unit, minimum_stock, description, photo_url } = req.body;
   try {
     const data = await prisma.item.update({
       where: { id },
-      data: { itemName: item_name, categoryName: category, unit, minimumStock: parseInt(minimum_stock), description }
+      data: { 
+        itemName: item_name, 
+        categoryName: category, 
+        unit, 
+        minimumStock: parseInt(minimum_stock), 
+        description,
+        photoUrl: photo_url || null
+      }
     });
     
     // Update itemName and category in historical records so UI stays consistent
