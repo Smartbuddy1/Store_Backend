@@ -20,7 +20,27 @@ const updateStaff = async (req, res) => {
   const { id } = req.params;
   const { name, type } = req.body;
   try {
-    const data = await prisma.staff.update({ where: { id }, data: { name: name.trim(), type } });
+    const oldStaff = await prisma.staff.findUnique({ where: { id } });
+    if (!oldStaff) return res.status(404).json({ success: false, message: 'Staff not found' });
+
+    const newName = name.trim();
+    const data = await prisma.staff.update({ where: { id }, data: { name: newName, type } });
+
+    // Cascade name update to related logs that store name as string
+    if (oldStaff.name !== newName) {
+      // Update ToolLogs
+      await prisma.toolLog.updateMany({
+        where: { helperName: oldStaff.name },
+        data: { helperName: newName }
+      });
+
+      // Update StockOuts (handoverTo)
+      await prisma.stockOut.updateMany({
+        where: { handoverTo: oldStaff.name },
+        data: { handoverTo: newName }
+      });
+    }
+
     res.json({ success: true, data });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
