@@ -31,6 +31,51 @@ const getStockOut = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
+const getStockOutPaginated = async (req, res) => {
+  const { search, category, handover_to, from_date, to_date, page = 1, limit = 10 } = req.query;
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+
+  try {
+    const where = {
+      ...(category && { category }),
+      ...(handover_to && { handoverTo: handover_to }),
+      ...(from_date && { date: { gte: new Date(from_date) } }),
+      ...(to_date && { date: { lte: new Date(to_date) } }),
+      ...(search && {
+        OR: [
+          { itemName: { contains: search, mode: 'insensitive' } },
+          { itemCode: { contains: search, mode: 'insensitive' } }
+        ]
+      })
+    };
+
+    const [data, total] = await Promise.all([
+      prisma.stockOut.findMany({
+        where,
+        include: { item: { select: { photoUrl: true } } },
+        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum
+      }),
+      prisma.stockOut.count({ where })
+    ]);
+
+    const formattedData = data.map(record => ({
+      ...record,
+      photoUrl: record.item?.photoUrl || null
+    }));
+
+    res.json({ 
+      success: true, 
+      data: {
+        records: formattedData,
+        pagination: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) }
+      }
+    });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+};
+
 const createStockOut = async (req, res) => {
   const { date, time, item_code, item_name, category, quantity, handover_to, staff_id, purpose, remarks } = req.body;
   if (!date || !time || !item_code || !item_name || !quantity) {
@@ -75,4 +120,4 @@ const deleteStockOut = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
-module.exports = { getStockOut, createStockOut, updateStockOut, deleteStockOut };
+module.exports = { getStockOut, getStockOutPaginated, createStockOut, updateStockOut, deleteStockOut };

@@ -21,13 +21,57 @@ const getStockIn = async (req, res) => {
       },
       orderBy: [{ date: 'desc' }, { createdAt: 'desc' }]
     });
-    
     const formattedData = data.map(record => ({
       ...record,
       photoUrl: record.item?.photoUrl || null
     }));
     
     res.json({ success: true, data: formattedData });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+};
+
+const getStockInPaginated = async (req, res) => {
+  const { search, category, source, from_date, to_date, page = 1, limit = 10 } = req.query;
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  
+  try {
+    const where = {
+      ...(category && { category }),
+      ...(source && { source }),
+      ...(from_date && { date: { gte: new Date(from_date) } }),
+      ...(to_date && { date: { lte: new Date(to_date) } }),
+      ...(search && {
+        OR: [
+          { itemName: { contains: search, mode: 'insensitive' } },
+          { itemCode: { contains: search, mode: 'insensitive' } }
+        ]
+      })
+    };
+
+    const [data, total] = await Promise.all([
+      prisma.stockIn.findMany({
+        where,
+        include: { item: { select: { photoUrl: true } } },
+        orderBy: [{ date: 'desc' }, { createdAt: 'desc' }],
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum
+      }),
+      prisma.stockIn.count({ where })
+    ]);
+
+    const formattedData = data.map(record => ({
+      ...record,
+      photoUrl: record.item?.photoUrl || null
+    }));
+
+    res.json({ 
+      success: true, 
+      data: {
+        records: formattedData,
+        pagination: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) }
+      }
+    });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
@@ -73,4 +117,4 @@ const deleteStockIn = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
-module.exports = { getStockIn, createStockIn, updateStockIn, deleteStockIn };
+module.exports = { getStockIn, getStockInPaginated, createStockIn, updateStockIn, deleteStockIn };

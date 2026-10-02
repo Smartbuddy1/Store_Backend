@@ -19,6 +19,41 @@ const getItems = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
+const getItemsPaginated = async (req, res) => {
+  const { search, category, page = 1, limit = 10 } = req.query;
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  try {
+    const where = {
+      ...(category && { categoryName: category }),
+      ...(search && {
+        OR: [
+          { itemName: { contains: search, mode: 'insensitive' } },
+          { itemCode: { contains: search, mode: 'insensitive' } }
+        ]
+      })
+    };
+    
+    const [data, total] = await Promise.all([
+      prisma.item.findMany({
+        where,
+        orderBy: { itemCode: 'asc' },
+        skip: (pageNum - 1) * limitNum,
+        take: limitNum
+      }),
+      prisma.item.count({ where })
+    ]);
+    
+    res.json({ 
+      success: true, 
+      data: {
+        records: data,
+        pagination: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) }
+      }
+    });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+};
+
 const getItemByCode = async (req, res) => {
   const { code } = req.params;
   try {
@@ -88,4 +123,4 @@ const deleteItem = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
-module.exports = { getItems, getItemByCode, createItem, updateItem, deleteItem };
+module.exports = { getItems, getItemsPaginated, getItemByCode, createItem, updateItem, deleteItem };

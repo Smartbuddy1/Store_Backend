@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getStockOut, createStockOut, updateStockOut, deleteStockOut } = require('../controllers/stockOutController');
+const { getStockOut, getStockOutPaginated, createStockOut, updateStockOut, deleteStockOut } = require('../controllers/stockOutController');
 
+router.get('/paginated', getStockOutPaginated);
 router.get('/', getStockOut);
 router.post('/', createStockOut);
 router.put('/:id', updateStockOut);
