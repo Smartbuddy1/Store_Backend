@@ -66,7 +66,10 @@ exports.getAllLogs = async (req, res) => {
 
 exports.issueTool = async (req, res) => {
   try {
-    const { toolCode, helperName, issueTime } = req.body;
+    const { toolCode, helperName, issueTime } = req.body || {};
+    if (!toolCode || !helperName || !issueTime) {
+      return res.status(400).json({ success: false, message: 'toolCode, helperName, and issueTime are required' });
+    }
     const log = await prisma.toolLog.create({
       data: { toolCode, helperName, issueTime, status: 'ISSUED' }
     });

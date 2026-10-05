@@ -81,7 +81,19 @@ const createStockOut = async (req, res) => {
   if (!date || !time || !item_code || !item_name || !quantity) {
     return res.status(400).json({ success: false, message: 'date, time, item_code, item_name, quantity required' });
   }
+  
   try {
+    const parsedQuantity = parseFloat(quantity);
+    
+    // Validate current stock
+    const totalIn = await prisma.stockIn.aggregate({ where: { itemCode: item_code }, _sum: { quantity: true } });
+    const totalOut = await prisma.stockOut.aggregate({ where: { itemCode: item_code }, _sum: { quantity: true } });
+    const currentQty = (totalIn._sum.quantity || 0) - (totalOut._sum.quantity || 0);
+
+    if (parsedQuantity > currentQty) {
+      return res.status(400).json({ success: false, message: `Insufficient stock. Available: ${currentQty}` });
+    }
+
     const data = await prisma.stockOut.create({
       data: {
         date: new Date(date),
@@ -89,7 +101,7 @@ const createStockOut = async (req, res) => {
         itemCode: item_code,
         itemName: item_name,
         category: category || null,
-        quantity: parseFloat(quantity),
+        quantity: parsedQuantity,
         handoverTo: handover_to || null,
         staffId: staff_id || null,
         purpose: purpose || null,
@@ -104,9 +116,25 @@ const updateStockOut = async (req, res) => {
   const { id } = req.params;
   const { date, time, item_code, item_name, category, quantity, handover_to, staff_id, purpose, remarks } = req.body;
   try {
+    const parsedQuantity = parseFloat(quantity);
+    
+    const oldRecord = await prisma.stockOut.findUnique({ where: { id } });
+    if (!oldRecord) return res.status(404).json({ success: false, message: 'Record not found' });
+    
+    // Validate current stock for the new item code
+    const totalIn = await prisma.stockIn.aggregate({ where: { itemCode: item_code }, _sum: { quantity: true } });
+    const totalOut = await prisma.stockOut.aggregate({ where: { itemCode: item_code }, _sum: { quantity: true } });
+    
+    // If updating the same item, add back the old quantity to available stock
+    const currentQty = (totalIn._sum.quantity || 0) - (totalOut._sum.quantity || 0) + (oldRecord.itemCode === item_code ? oldRecord.quantity : 0);
+
+    if (parsedQuantity > currentQty) {
+      return res.status(400).json({ success: false, message: `Insufficient stock. Available: ${currentQty}` });
+    }
+
     const data = await prisma.stockOut.update({
       where: { id },
-      data: { date: new Date(date), time, itemCode: item_code, itemName: item_name, category, quantity: parseFloat(quantity), handoverTo: handover_to, staffId: staff_id || null, purpose, remarks }
+      data: { date: new Date(date), time, itemCode: item_code, itemName: item_name, category, quantity: parsedQuantity, handoverTo: handover_to, staffId: staff_id || null, purpose, remarks }
     });
     res.json({ success: true, data });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }

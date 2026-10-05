@@ -179,3 +179,19 @@ model KitItem {
 
   @@map("kit_items")
 }
+
+// =============================================
+// 9. Users / Authentication
+// =============================================
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(150)
+  mobile    String   @unique @db.VarChar(15)
+  password  String   @db.VarChar(255)
+  role      String   @default("Store_Incharge") @db.VarChar(50)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
