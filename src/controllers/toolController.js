@@ -37,6 +37,21 @@ exports.deleteTool = async (req, res) => {
   }
 };
 
+exports.updateTool = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { toolCode, toolName } = req.body;
+    const tool = await prisma.tool.update({
+      where: { id },
+      data: { toolCode, toolName }
+    });
+    res.json({ success: true, data: tool });
+  } catch (error) {
+    console.error('Error updating tool:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
 // Logs
 exports.getAllLogs = async (req, res) => {
   try {

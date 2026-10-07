@@ -12,6 +12,7 @@ router.delete('/logs/:id', toolController.deleteLog);
 // Master Tools
 router.get('/', toolController.getAllTools);
 router.post('/', toolController.createTool);
+router.put('/:id', toolController.updateTool);
 router.delete('/:id', toolController.deleteTool);
 
 module.exports = router;

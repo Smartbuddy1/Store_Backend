@@ -89,6 +89,8 @@ model StockIn {
 
   item Item @relation(fields: [itemCode], references: [itemCode], onDelete: Cascade)
 
+  @@index([itemCode])
+  @@index([date])
   @@map("stock_in")
 }
 
@@ -113,6 +115,8 @@ model StockOut {
   item  Item   @relation(fields: [itemCode], references: [itemCode], onDelete: Cascade)
   staff Staff? @relation(fields: [staffId], references: [id])
 
+  @@index([itemCode])
+  @@index([date])
   @@map("stock_out")
 }
 
@@ -194,4 +198,34 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+// =============================================
+// 10. Requisitions History
+// =============================================
+model Requisition {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type            String   @db.VarChar(50) // "REGULAR" or "KIT"
+  kitName         String?  @map("kit_name") @db.VarChar(200)
+  kitMultiplier   Float?   @map("kit_multiplier")
+  exportFormat    String   @map("export_format") @db.VarChar(20) // "PDF" or "EXCEL"
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  items           RequisitionItem[]
+
+  @@map("requisitions")
+}
+
+model RequisitionItem {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requisitionId   String   @map("requisition_id") @db.Uuid
+  itemCode        String   @map("item_code") @db.VarChar(20)
+  itemName        String   @map("item_name") @db.VarChar(200)
+  category        String?  @db.VarChar(100)
+  currentQty      Float    @map("current_qty")
+  reqQty          Float    @map("req_qty")
+
+  requisition     Requisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+
+  @@map("requisition_items")
 }

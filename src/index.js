@@ -31,7 +31,7 @@ app.use('/api/stock-out', require('./routes/stockOutRoutes'));
 app.use('/api/current-stock', require('./routes/stockRoutes'));
 app.use('/api/tools', require('./routes/toolRoutes'));
 app.use('/api/kits', require('./routes/kitRoutes'));
-
+app.use('/api/requisitions', require('./routes/requisitionRoutes'));
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({
