@@ -187,9 +187,28 @@ const updateItem = async (req, res) => {
 const deleteItem = async (req, res) => {
   const { id } = req.params;
   try {
+    const item = await prisma.item.findUnique({ where: { id } });
+    if (!item) return res.status(404).json({ success: false, message: 'Item not found' });
+
+    // Check for stock history to prevent foreign key errors
+    const stockInCount = await prisma.stockIn.count({ where: { itemCode: item.itemCode } });
+    const stockOutCount = await prisma.stockOut.count({ where: { itemCode: item.itemCode } });
+
+    if (stockInCount > 0 || stockOutCount > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Cannot delete this item because it has Stock In/Out history. Please delete the history first or just mark it as zero stock.' 
+      });
+    }
+
     await prisma.item.delete({ where: { id } });
     res.json({ success: true, message: 'Item deleted' });
-  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+  } catch (err) { 
+    if (err.code === 'P2003') {
+      return res.status(400).json({ success: false, message: 'Cannot delete item because it has related stock records.' });
+    }
+    res.status(500).json({ success: false, message: err.message }); 
+  }
 };
 
 module.exports = { getItems, getItemsPaginated, getItemByCode, createItem, updateItem, deleteItem };
