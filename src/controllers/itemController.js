@@ -269,16 +269,7 @@ const deleteItem = async (req, res) => {
     const item = await prisma.item.findUnique({ where: { id } });
     if (!item) return res.status(404).json({ success: false, message: 'Item not found' });
 
-    // Check for stock history to prevent foreign key errors
-    const stockInCount = await prisma.stockIn.count({ where: { itemCode: item.itemCode } });
-    const stockOutCount = await prisma.stockOut.count({ where: { itemCode: item.itemCode } });
-
-    if (stockInCount > 0 || stockOutCount > 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Cannot delete this item because it has Stock In/Out history. Please delete the history first or just mark it as zero stock.' 
-      });
-    }
+    // Check for stock history was removed to allow deletion
 
     const codeParts = item.itemCode.split('-');
     
