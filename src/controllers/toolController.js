@@ -29,7 +29,11 @@ exports.createTool = async (req, res) => {
 exports.deleteTool = async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.tool.delete({ where: { id } });
+    const tool = await prisma.tool.findUnique({ where: { id } });
+    if (tool) {
+      await prisma.toolLog.deleteMany({ where: { toolCode: tool.toolCode } });
+      await prisma.tool.delete({ where: { id } });
+    }
     res.json({ success: true, message: 'Tool deleted successfully' });
   } catch (error) {
     console.error('Error deleting tool:', error);
