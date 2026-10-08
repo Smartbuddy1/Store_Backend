@@ -1,0 +1,103 @@
+{
+  "executedAt": "2026-10-07T11:30:06.210Z",
+  "sourceFile": "Dinesh_Nahire_Store_Management_1.xlsx",
+  "itemMaster": {
+    "sourceRows": 317,
+    "inserted": 221,
+    "skippedExists": 88,
+    "skippedBlank": 4,
+    "skippedDuplicate": 4,
+    "duplicateCodes": [
+      "M-076",
+      "M-077",
+      "M-078",
+      "M-090"
+    ],
+    "blankNameRows": [
+      {
+        "row": 241,
+        "code": "M-104",
+        "cat": ""
+      },
+      {
+        "row": 242,
+        "code": "M-105",
+        "cat": ""
+      },
+      {
+        "row": 243,
+        "code": "M-106",
+        "cat": ""
+      },
+      {
+        "row": 244,
+        "code": "M-107",
+        "cat": ""
+      }
+    ],
+    "blankCatRows": [],
+    "totalInDB": 309
+  },
+  "stockIn": {
+    "imported": 253,
+    "blank": 30,
+    "alreadyExists": 0,
+    "unmatched": 0,
+    "totalInDB": 253,
+    "totalQtyInDB": 11542,
+    "skippedRows": []
+  },
+  "stockOut": {
+    "imported": 29,
+    "blank": 4,
+    "alreadyExists": 0,
+    "unmatched": 0,
+    "incompleteRows": [
+      {
+        "row": 13,
+        "date": "2026-09-22",
+        "code": "",
+        "qty": "",
+        "handoverTo": "",
+        "issues": [
+          "missing item code",
+          "missing quantity"
+        ]
+      },
+      {
+        "row": 14,
+        "date": "NULL",
+        "code": "M-074",
+        "qty": 1,
+        "handoverTo": "",
+        "issues": [
+          "missing date"
+        ]
+      },
+      {
+        "row": 17,
+        "date": "2026-09-23",
+        "code": "M-094",
+        "qty": "",
+        "handoverTo": "Mr.Mansur khan",
+        "issues": [
+          "missing quantity"
+        ]
+      },
+      {
+        "row": 41,
+        "date": "2026-10-03",
+        "code": "",
+        "qty": "",
+        "handoverTo": "",
+        "issues": [
+          "missing item code",
+          "missing quantity"
+        ]
+      }
+    ],
+    "totalInDB": 29,
+    "totalQtyInDB": 393
+  },
+  "calculatedCurrentStock": 11149
+}

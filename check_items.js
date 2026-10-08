@@ -2,10 +2,14 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-  const items = await prisma.$queryRawUnsafe('SELECT * FROM items');
-  console.log(items);
+  const categories = await prisma.category.findMany();
+  console.log('Categories:', categories);
+
+  const elecItems = await prisma.item.findMany({ where: { categoryName: 'Electrical' }, take: 5 });
+  console.log('Electrical Items (sample):', elecItems.map(i => i.itemCode));
+
+  const electronicsItems = await prisma.item.findMany({ where: { categoryName: 'Electronics' }, take: 5 });
+  console.log('Electronics Items (sample):', electronicsItems.map(i => i.itemCode));
 }
 
-main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect());
+main().finally(() => prisma.$disconnect());
