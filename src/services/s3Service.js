@@ -1,4 +1,13 @@
-const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+let S3Client, PutObjectCommand, DeleteObjectCommand;
+try {
+  const s3Sdk = require('@aws-sdk/client-s3');
+  S3Client = s3Sdk.S3Client;
+  PutObjectCommand = s3Sdk.PutObjectCommand;
+  DeleteObjectCommand = s3Sdk.DeleteObjectCommand;
+} catch (e) {
+  console.warn('⚠️ @aws-sdk/client-s3 is not installed or failed to load. Please run "npm install".');
+}
+
 const crypto = require('crypto');
 
 const region = process.env.AWS_REGION || 'ap-south-1';
@@ -7,6 +16,10 @@ const bucketName = process.env.AWS_S3_BUCKET || 'aarya-store';
 let s3Client = null;
 
 function getS3Client() {
+  if (!S3Client) {
+    console.warn('⚠️ S3 SDK is not loaded. Run "npm install".');
+    return null;
+  }
   if (!s3Client) {
     if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
       console.warn('⚠️ AWS S3 credentials are missing in environment variables.');
