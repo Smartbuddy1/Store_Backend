@@ -1,4 +1,5 @@
 const prisma = require('../config/supabase');
+const { processItemPhotos } = require('../services/s3Service');
 
 // UUID validation helper
 const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
@@ -25,6 +26,7 @@ const getItems = async (req, res) => {
         unit: true,
         minimumStock: true,
         description: true,
+        photoUrl: true,
         createdAt: true,
         updatedAt: true
       }
@@ -119,6 +121,8 @@ const createItem = async (req, res) => {
       item_code = `${catData.prefix}-${String(maxNum + 1).padStart(3, '0')}`;
     }
 
+    const processedPhotoUrl = await processItemPhotos(req.body.photo_url);
+
     const data = await prisma.item.create({
       data: {
         itemCode: item_code.trim().toUpperCase(),
@@ -127,7 +131,7 @@ const createItem = async (req, res) => {
         unit: unit || 'Nos',
         minimumStock: parseInt(minimum_stock) || 5,
         description: description || null,
-        photoUrl: req.body.photo_url || null
+        photoUrl: processedPhotoUrl
       }
     });
     res.status(201).json({ success: true, data });
@@ -184,6 +188,8 @@ const updateItem = async (req, res) => {
       newItemCode = `${catData.prefix}-${String(maxNum + 1).padStart(3, '0')}`;
     }
 
+    const processedPhotoUrl = await processItemPhotos(photo_url);
+
     const data = await prisma.item.update({
       where: { id },
       data: { 
@@ -193,7 +199,7 @@ const updateItem = async (req, res) => {
         unit, 
         minimumStock: parseInt(minimum_stock), 
         description,
-        photoUrl: photo_url || null
+        photoUrl: processedPhotoUrl
       }
     });
     
