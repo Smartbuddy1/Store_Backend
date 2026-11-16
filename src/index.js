@@ -24,6 +24,7 @@ app.use('/api', authMiddleware);
 
 // Protected Routes
 app.use('/api/categories', require('./routes/categoryRoutes'));
+app.use('/api/units', require('./routes/unitRoutes'));
 app.use('/api/staff', require('./routes/staffRoutes'));
 app.use('/api/items', require('./routes/itemRoutes'));
 app.use('/api/stock-in', require('./routes/stockInRoutes'));

@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { getStaff, createStaff, updateStaff, deleteStaff } = require('../controllers/staffController');
+const { getStaffRoles, createStaffRole, getStaff, createStaff, updateStaff, deleteStaff } = require('../controllers/staffController');
 
+router.get('/roles', getStaffRoles);
+router.post('/roles', createStaffRole);
 router.get('/', getStaff);
 router.post('/', createStaff);
 router.put('/:id', updateStaff);
