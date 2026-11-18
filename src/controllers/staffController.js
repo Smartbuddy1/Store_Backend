@@ -2,22 +2,47 @@ const prisma = require('../config/supabase');
 
 const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
+const ensureStaffRolesTable = async () => {
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS staff_roles (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(100) UNIQUE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+  } catch (e) {}
+};
+
 const getStaffRoles = async (req, res) => {
   try {
-    let roles = await prisma.staffRole.findMany({ orderBy: { name: 'asc' } });
-    if (!roles || roles.length === 0) {
-      // Seed default roles if none exist
-      const defaultRoles = ['Staff', 'Helper', 'Other'];
-      for (const r of defaultRoles) {
-        await prisma.staffRole.upsert({
-          where: { name: r },
-          update: {},
-          create: { name: r }
-        }).catch(() => {});
+    if (prisma.staffRole) {
+      let roles = await prisma.staffRole.findMany({ orderBy: { name: 'asc' } });
+      if (!roles || roles.length === 0) {
+        // Seed default roles if none exist
+        const defaultRoles = ['Staff', 'Helper', 'Other'];
+        for (const r of defaultRoles) {
+          await prisma.staffRole.upsert({
+            where: { name: r },
+            update: {},
+            create: { name: r }
+          }).catch(() => {});
+        }
+        roles = await prisma.staffRole.findMany({ orderBy: { name: 'asc' } });
       }
-      roles = await prisma.staffRole.findMany({ orderBy: { name: 'asc' } });
+      return res.json({ success: true, data: roles });
     }
-    res.json({ success: true, data: roles });
+
+    // Fallback using raw SQL
+    await ensureStaffRolesTable();
+    let roles = await prisma.$queryRawUnsafe(`SELECT * FROM staff_roles ORDER BY name ASC`);
+    if (!roles || roles.length === 0) {
+      await prisma.$executeRawUnsafe(`
+        INSERT INTO staff_roles (name) VALUES ('Staff'), ('Helper'), ('Other') ON CONFLICT (name) DO NOTHING;
+      `).catch(() => {});
+      roles = await prisma.$queryRawUnsafe(`SELECT * FROM staff_roles ORDER BY name ASC`);
+    }
+    return res.json({ success: true, data: roles });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -30,14 +55,31 @@ const createStaffRole = async (req, res) => {
   }
   const trimmed = name.trim();
   try {
-    const existing = await prisma.staffRole.findFirst({
-      where: { name: { equals: trimmed, mode: 'insensitive' } }
-    });
-    if (existing) {
+    if (prisma.staffRole) {
+      const existing = await prisma.staffRole.findFirst({
+        where: { name: { equals: trimmed, mode: 'insensitive' } }
+      });
+      if (existing) {
+        return res.status(400).json({ success: false, message: 'Role already exists' });
+      }
+      const data = await prisma.staffRole.create({ data: { name: trimmed } });
+      return res.status(201).json({ success: true, data });
+    }
+
+    // Fallback using raw SQL
+    await ensureStaffRolesTable();
+    const existing = await prisma.$queryRawUnsafe(
+      `SELECT * FROM staff_roles WHERE LOWER(name) = LOWER($1) LIMIT 1`,
+      trimmed
+    );
+    if (existing && existing.length > 0) {
       return res.status(400).json({ success: false, message: 'Role already exists' });
     }
-    const data = await prisma.staffRole.create({ data: { name: trimmed } });
-    res.status(201).json({ success: true, data });
+    const result = await prisma.$queryRawUnsafe(
+      `INSERT INTO staff_roles (name) VALUES ($1) RETURNING *`,
+      trimmed
+    );
+    return res.status(201).json({ success: true, data: result[0] });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -56,11 +98,19 @@ const createStaff = async (req, res) => {
   const trimmedType = type.trim();
   try {
     // Automatically ensure role is recorded in staff_roles
-    await prisma.staffRole.upsert({
-      where: { name: trimmedType },
-      update: {},
-      create: { name: trimmedType }
-    }).catch(() => {});
+    if (prisma.staffRole) {
+      await prisma.staffRole.upsert({
+        where: { name: trimmedType },
+        update: {},
+        create: { name: trimmedType }
+      }).catch(() => {});
+    } else {
+      await ensureStaffRolesTable();
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO staff_roles (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
+        trimmedType
+      ).catch(() => {});
+    }
 
     const data = await prisma.staff.create({ data: { name: name.trim(), type: trimmedType } });
     res.status(201).json({ success: true, data });
@@ -78,11 +128,19 @@ const updateStaff = async (req, res) => {
     const newType = type ? type.trim() : oldStaff.type;
 
     if (newType) {
-      await prisma.staffRole.upsert({
-        where: { name: newType },
-        update: {},
-        create: { name: newType }
-      }).catch(() => {});
+      if (prisma.staffRole) {
+        await prisma.staffRole.upsert({
+          where: { name: newType },
+          update: {},
+          create: { name: newType }
+        }).catch(() => {});
+      } else {
+        await ensureStaffRolesTable();
+        await prisma.$executeRawUnsafe(
+          `INSERT INTO staff_roles (name) VALUES ($1) ON CONFLICT (name) DO NOTHING`,
+          newType
+        ).catch(() => {});
+      }
     }
 
     const data = await prisma.staff.update({ where: { id }, data: { name: newName, type: newType } });
